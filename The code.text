@@ -1,1 +1,43 @@
+-- Return all customers listed in the orders table who placed orders on the most recently recorded day.
+SELECT c.contact_name, o.order_date
+FROM customers c
+JOIN (
+    SELECT customer_id, MAX(order_date) AS latest_order_date
+    FROM orders
+    GROUP BY customer_id
+) latest_orders ON c.customer_id = latest_orders.customer_id
+JOIN orders o ON c.customer_id = o.customer_id AND o.order_date = latest_orders.latest_order_date;
 
+-- Select all product names and prices that have unit price which is bigger than price of product with name 'Carnarvon Tigers'
+SELECT pr.product_name FROM products pr
+WHERE pr.unit_price < (SELECT unit_price FROM products WHERE product_name = 'Carnarvon Tigers');
+
+-- Select customer ids and ther contact names that made order that was shipped to Brazil.
+SELECT cus.customer_id, cus.contact_name, o.ship_country 
+FROM customers cus
+JOIN orders o
+ON cus.customer_id = o.customer_id
+AND o.ship_country = 'Brazil';
+
+-- Select customer ids who ordered more than 20 items of product with name = 'Tofu' on a single order.
+SELECT o.customer_id from orders o
+WHERE 20 <(SELECT od.quantity FROM order_details od WHERE od.order_id = o.order_id
+AND od.product_id = (SELECT p.product_id FROM products p WHERE p.product_name = 'Tofu'));
+
+-- Select only discounted products names, dicount value, category of it, and shipped date of order where this product occurs. Use join + sub query structure.
+SELECT o.shipped_date, b.productName, b.categoryName, b.discount FROM orders o
+INNER JOIN (
+    SELECT od.order_id AS orderId, p.product_name AS productName, c.category_name AS categoryName, od.discount AS discount
+    FROM products p
+	LEFT JOIN order_details od
+	ON p.product_id = od.product_id
+	left join categories c
+	ON p.category_id  = c.category_id
+	WHERE od.discount > 0
+   ) b
+ON o.order_id = b.orderId;
+
+-- Select orders for customers that come from London and are shipped via United Package. Remember to use sub queries (not joins).
+SELECT * FROM orders o
+WHERE o.customer_id IN (SELECT c.customer_id FROM customers c WHERE c.city = 'London')
+AND o.ship_via IN (SELECT s.shipper_id FROM shippers s WHERE s.company_name = 'United Package');
